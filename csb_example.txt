@@ -1,0 +1,32 @@
+TOP  = _ ({double}) _;
+
+IP   = {N255}\.{N255}\.{N255}\.{N255};
+.N255 = (\d+@x)(x=int(x))[x>=0][x<=255]($x);
+
+until = $( ( (. @ x)[x[0]!=arg] )* ) (. @ x)[x[0]=arg];
+
+xml = \< _ $({word} @ head) (\s+ {setting})* _ \>
+      {text}?({xml}+ {text})*{xml}*
+      \<\/ _ ({word} @ tail) [head=tail] _ \>;
+setting = $({word}) _ \= _ ($({word})|\"$(((.@cstr)[cstr!="\""])*)\");
+text = $(((. @ cstr)[cstr!="\<"][cstr!="\>"])*);
+.word = (\a | \_)(\w | \_)*;
+
+.rexp =
+ [arg=()] {rexp 1} | 
+ [arg<=1] {alt} |
+ [arg<=2] {cat} |
+ [arg<=3] {uny} |
+ [arg<=4] ({eps} | {c} | {paren});
+alt = {rexp 2} (\| {rexp 2})+; 
+cat = {rexp 3} {rexp 3}+; 
+uny = {rexp 4}$(\*|\+|\?); 
+eps = \(\); 
+c = $(\w|\.|\\.); 
+.paren = \({rexp}\);
+
+test = (123@x)(x=int(x))($x);
+
+double = (.*\s)?(.*@x)\s(.*\s)?(.*@y)[x=y] (\s .*)($x);
+double2 = (.*\s)?(.* @ x)\s(.*\s)?{copy x}(\s .*)?;
+copy = (i=0) ((.@c)[arg[i]=(c[0])](i=i+1)($c))*[i=len(arg)];
